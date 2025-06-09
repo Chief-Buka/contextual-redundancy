@@ -11,5 +11,5 @@ To generate conditional entropy values for each feature run:
 - **Duration**: `python src/train.py experiment=emnlp/finetuning/duration_regression_syll_bert
 
 Then use the notebook to produce the plots.
-`name` is the relevant folder in the folder `losses_cm`
-`feature` is the name the of the feature (one of the keys in the `featplotdict` dictionary
+- `name` is the relevant folder in the folder `losses_cm`
+- `feature` is the name the of the feature (one of the keys in the `featplotdict` dictionary
