@@ -12,4 +12,4 @@ To generate conditional entropy values for each feature run:
 
 Then use the notebook to produce the plots.
 - `name` is the relevant folder in the folder `losses_cm`
-- `feature` is the name the of the feature (one of the keys in the `featplotdict` dictionary
+- `feature` is the name the of the feature (one of the keys in the `featplotdict` dictionary)
