@@ -7,7 +7,8 @@ import torch
 from lightning import LightningModule
 from torch import nn
 from torchmetrics import MinMetric, MaxMetric
-from transformers import AdamW, AutoModel, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from transformers import AutoModel, get_linear_schedule_with_warmup #AdamW
 import numpy as np
 
 from src.utils import utils

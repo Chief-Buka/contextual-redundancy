@@ -10,7 +10,9 @@ from torchmetrics import MinMetric, MaxMetric
 from torch.distributions import Normal
 from torch.nn import L1Loss
 
-from transformers import AdamW, AutoModel, get_linear_schedule_with_warmup
+from torch.optim import AdamW
+
+from transformers import AutoModel, get_linear_schedule_with_warmup #AdamW
 import numpy as np
 from transformers import LlamaForCausalLM, LlamaTokenizer
 
@@ -145,8 +147,11 @@ class TokenTaggingRegressorMLE(LightningModule):
         self.val_loss_metrics = loss_metrics()
         self.test_loss_metrics = loss_metrics()
         self.epoch_num = 0
-        if not os.path.isdir("./losses_relative_prominence"):
-            os.mkdir("./losses_relative_prominence")
+
+        self.savepath = f"./losses_cm/relative_prominence_{huggingface_model}"
+        if not os.path.isdir(self.savepath):
+            os.mkdir(self.savepath)
+
 
         # Collect the forward signature
         params = inspect.signature(self.model.forward).parameters.values()
@@ -253,9 +258,9 @@ class TokenTaggingRegressorMLE(LightningModule):
 
     def on_train_epoch_end(self):
         self.train_loss_metrics.compute()
-        np.save(f"./losses_relative_prominence/train_sum{self.epoch_num}.npy", self.train_loss_metrics.loss_sum)
-        np.save(f"./losses_relative_prominence/train_stderr{self.epoch_num}.npy", self.train_loss_metrics.loss_stderr)
-        np.save(f"./losses_relative_prominence/train_freqs{self.epoch_num}.npy", self.train_loss_metrics.freqs_sum)
+        np.save(f"{self.savepath}/train_sum{self.epoch_num}.npy", self.train_loss_metrics.loss_sum)
+        np.save(f"{self.savepath}/train_stderr{self.epoch_num}.npy", self.train_loss_metrics.loss_stderr)
+        np.save(f"{self.savepath}/train_freqs{self.epoch_num}.npy", self.train_loss_metrics.freqs_sum)
         #print(self.train_loss_metrics.loss_sum)
         #print(self.train_loss_metrics.freqs_sum)
         self.train_loss_metrics.reset()
@@ -303,9 +308,9 @@ class TokenTaggingRegressorMLE(LightningModule):
 
         #cso
         self.val_loss_metrics.compute()
-        np.save(f"./losses_relative_prominence/val_sum{self.epoch_num}.npy", self.val_loss_metrics.loss_sum)
-        np.save(f"./losses_relative_prominence/val_stderr{self.epoch_num}.npy", self.val_loss_metrics.loss_stderr)
-        np.save(f"./losses_relative_prominence/val_freqs{self.epoch_num}.npy", self.val_loss_metrics.freqs_sum)
+        np.save(f"{self.savepath}/val_sum{self.epoch_num}.npy", self.val_loss_metrics.loss_sum)
+        np.save(f"{self.savepath}/val_stderr{self.epoch_num}.npy", self.val_loss_metrics.loss_stderr)
+        np.save(f"{self.savepath}/val_freqs{self.epoch_num}.npy", self.val_loss_metrics.freqs_sum)
         #print(self.val_loss_metrics.freqs_sum)
         self.val_loss_metrics.reset()
 
@@ -389,9 +394,9 @@ class TokenTaggingRegressorMLE(LightningModule):
     def on_test_epoch_end(self):
         # cso
         self.test_loss_metrics.compute()
-        np.save(f"./losses_relative_prominence/test_sum.npy", self.test_loss_metrics.loss_sum)
-        np.save(f"./losses_relative_prominence/test_stderr.npy", self.test_loss_metrics.loss_stderr)
-        np.save(f"./losses_relative_prominence/test_freqs.npy", self.test_loss_metrics.freqs_sum)
+        np.save(f"{self.savepath}/test_sum.npy", self.test_loss_metrics.loss_sum)
+        np.save(f"{self.savepath}/test_stderr.npy", self.test_loss_metrics.loss_stderr)
+        np.save(f"{self.savepath}/test_freqs.npy", self.test_loss_metrics.freqs_sum)
 
 
     def on_epoch_end(self):

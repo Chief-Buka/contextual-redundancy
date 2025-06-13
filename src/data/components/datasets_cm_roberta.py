@@ -63,7 +63,7 @@ def tokenize_text_with_labels(
     score_first_token: bool = False,
     score_last_token: bool = False,
     relative_to_prev: bool = False,
-    remove_punctuation: bool = False,
+    remove_punctuation: bool = True,
     n_prev: int = 1,
     relative_to_mean=False,
     word_stats: dict = None,
@@ -262,6 +262,7 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         relative_to_mean=False,
         word_stats: dict = None,
         debug: bool = False,
+        is_f0: bool = False
     ):
         """
         ::param inputs: list of strings
@@ -284,6 +285,7 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         self.relative_to_mean = relative_to_mean
         self.word_stats = word_stats
         self.debug = debug
+        self.is_f0 = is_f0
 
         #cso 
         self.max_segment_len = 10
@@ -326,7 +328,11 @@ class TokenTaggingDatasetSampleWindows(Dataset):
                 word_to_tokens,
             ) = result
 
-            labeled_indices = [i for i, label in enumerate(tokenized_labels) if not np.array_equal(label,[-999]*len(label))]
+
+            if self.is_f0:
+                labeled_indices = [i for i, label in enumerate(tokenized_labels) if not np.array_equal(label,[-999]*len(label))]
+            else:
+                labeled_indices = [i for i, label in enumerate(tokenized_labels) if label != -999]
             seqlen = len(labeled_indices)
             counts[seqlen] += 1
 
@@ -358,7 +364,10 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         item_cm = dict()
 
         # cso
-        labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if not np.array_equal(label,[-999]*len(label))]
+        if self.is_f0:
+            labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if not np.array_equal(label,[-999]*len(label))]
+        else:
+            labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if label != -999]
         seqlen = len(labeled_indices)
 
         valid_sizes = self.segment_freqs[:seqlen]

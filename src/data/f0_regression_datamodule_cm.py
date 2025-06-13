@@ -17,7 +17,7 @@ from omegaconf import DictConfig, OmegaConf
 from transformers import GPT2Tokenizer, BertTokenizer, AutoTokenizer, AutoModel
 
 from src.data.components.feature_extractors import ProsodyFeatureExtractor
-from src.data.components.datasets_cm_roberta import TokenTaggingDatasetSampleWindows
+from src.data.components.datasets_cm import TokenTaggingDatasetSampleWindows
 from src.data.components.collators import vector_collate_fn, encode_and_pad_batch
 
 
@@ -145,6 +145,7 @@ class F0RegressionDataModule(LightningDataModule):
             relative_to_mean=self.hparams.relative_to_mean,
             word_stats=self.hparams.word_stats_path,
             debug=self.hparams.debug,
+            is_f0=True
         )
 
         return texts, f0_curves, dataset

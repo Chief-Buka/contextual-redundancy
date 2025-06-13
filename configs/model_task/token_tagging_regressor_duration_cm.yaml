@@ -1,4 +1,4 @@
-_target_: src.models.token_tagging_regressor_duration_cm.TokenTaggingRegressorMLE
+_target_: src.models.token_tagging_regressor_mle_duration_cm.TokenTaggingRegressorMLE
 
 optimizer:
   _target_: torch.optim.AdamW

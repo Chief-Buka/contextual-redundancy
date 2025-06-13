@@ -63,7 +63,7 @@ def tokenize_text_with_labels(
     score_first_token: bool = False,
     score_last_token: bool = False,
     relative_to_prev: bool = False,
-    remove_punctuation: bool = False,
+    remove_punctuation: bool = True,
     n_prev: int = 1,
     relative_to_mean=False,
     word_stats: dict = None,
@@ -262,6 +262,7 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         relative_to_mean=False,
         word_stats: dict = None,
         debug: bool = False,
+        is_f0: bool = False,
     ):
         """
         ::param inputs: list of strings
@@ -284,6 +285,9 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         self.relative_to_mean = relative_to_mean
         self.word_stats = word_stats
         self.debug = debug
+        self.is_f0 = is_f0
+
+        #pdb.set_trace()
 
         #cso 
         self.max_segment_len = 10
@@ -327,7 +331,10 @@ class TokenTaggingDatasetSampleWindows(Dataset):
             ) = result
 
             #pdb.set_trace()
-            labeled_indices = [i for i, label in enumerate(tokenized_labels) if not np.array_equal(label,[-999]*len(label))]
+            if self.is_f0:
+                labeled_indices = [i for i, label in enumerate(tokenized_labels) if not np.array_equal(label,[-999]*len(label))] 
+            else:
+                labeled_indices = [i for i, label in enumerate(tokenized_labels) if label != -999]
             seqlen = len(labeled_indices)
             counts[seqlen] += 1
 
@@ -343,13 +350,21 @@ class TokenTaggingDatasetSampleWindows(Dataset):
                         "word_to_tokens": word_to_tokens,
                     }
                 )
-            else:
-                pdb.set_trace()
+            #else:
+            #    pdb.set_trace()
 
 
         print(f"Failed {cnt_failed}/{len(self.inputs)}")
         print(sorted(counts.items()))
-
+        x = []
+        for (n,k) in counts.items():
+            x+=(k*[n])
+        x = torch.Tensor(x).flatten()
+        var, mean = torch.var_mean(x)
+        print(f"Variance: {var}")
+        print(f"Mean: {mean}")
+        #pdb.set_trace()
+      
     def __len__(self):
         return len(self.processed_data)
 
@@ -359,7 +374,10 @@ class TokenTaggingDatasetSampleWindows(Dataset):
         item_cm = dict()
 
         # cso
-        labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if not np.array_equal(label,[-999]*len(label))]
+        if self.is_f0:
+            labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if not np.array_equal(label,[-999]*len(label))]
+        else:
+            labeled_indices = [i for i, label in enumerate(item["tokenized_labels"]) if label != -999]
         seqlen = len(labeled_indices)
 
         valid_sizes = self.segment_freqs[:seqlen]
@@ -395,120 +413,6 @@ class TokenTaggingDatasetSampleWindows(Dataset):
 
         return item_cm
 
-
-class TokenTaggingDatasetAllWindows(Dataset):
-    def __init__(
-        self,
-        input_texts,
-        targets,
-        tokenizer,
-        model_name: str,
-        score_first_token: bool = False,
-        score_last_token: bool = False,
-        relative_to_prev: bool = False,
-        remove_punctuation: bool = False,
-        n_prev: int = 1,
-        relative_to_mean=False,
-        word_stats: dict = None,
-        debug: bool = False,
-    ):
-        """
-        ::param inputs: list of strings
-        ::param targets: list of lists of labels
-        ::param model_name: name of the model to use
-        ::param tokenizer: tokenizer object
-        ::param score_first_token: whether to score only the first token of a word
-        ::param relative_to_prev: whether to score relative to the previous token
-        ::param n_prev: number of previous tokens to consider
-        """
-        self.inputs = input_texts
-        self.targets = targets
-        self.tokenizer = tokenizer
-        self.model_name = model_name
-        self.score_first_token = score_first_token
-        self.score_last_token = score_last_token
-        self.relative_to_prev = relative_to_prev
-        self.remove_punctuation = remove_punctuation
-        self.n_prev = n_prev
-        self.relative_to_mean = relative_to_mean
-        self.word_stats = word_stats
-        self.debug = debug
-        counts = defaultdict(int)
-
-        cnt_failed = 0
-        # Perform preprocessing at initialization
-        self.processed_data = []
-        for text, labels_per_word in tqdm(
-            zip(self.inputs, self.targets),
-            total=len(self.inputs),
-            desc="Preprocessing samples",
-        ):
-            result = tokenize_text_with_labels(
-                text=text,
-                labels=labels_per_word,
-                tokenizer=self.tokenizer,
-                model_type=self.model_name,
-                score_first_token=self.score_first_token,
-                score_last_token=self.score_last_token,
-                relative_to_prev=self.relative_to_prev,
-                remove_punctuation=self.remove_punctuation,
-                n_prev=self.n_prev,
-                relative_to_mean=self.relative_to_mean,
-                word_stats=self.word_stats,
-            )
-
-            if not result:
-                cnt_failed += 1
-                continue
-
-            (
-                input_text,
-                tokenized_text,
-                original_labels,
-                tokenized_labels,
-                token_ids,
-                mask,
-                word_to_tokens,
-            ) = result
-
-            labeled_indices = [i for i, label in enumerate(tokenized_labels) if label != -999]
-            seqlen = len(labeled_indices)
-            for context_length in range(1,11):
-                if context_length <= seqlen:
-                    for meta_index, start_index in enumerate(labeled_indices[:(seqlen-context_length)+1]):
-                        counts[context_length] += 1
-                        end_index = labeled_indices[meta_index:][context_length-1]
-                        item = dict()
-                        item["tokenized_text"] = [tokenized_text[0]] + tokenized_text[start_index:end_index+1] + [tokenized_text[-1]]
-                        item["tokenized_labels"] = [tokenized_labels[0]] + tokenized_labels[start_index:end_index+1] + [tokenized_labels[-1]]
-                        item["input_ids"] = [token_ids[0]] + token_ids[start_index:end_index+1] + [token_ids[-1]]
-                        item["loss_mask"] = [mask[0]] + mask[start_index:end_index+1] + [mask[-1]]
-                        item["context_length"] = context_length
-                        item["input_text"] = input_text
-                        item["word_to_tokens"] = word_to_tokens
-                        item["original_labels"] = original_labels
-                        self.processed_data.append(item)
-
-        print(len(self))
-        print(sorted(counts.items()))
-
-    def __len__(self):
-        return len(self.processed_data)
-
-    def __getitem__(self, idx):
-        item = self.processed_data[idx]
-
-        # if self.debug:
-        #     print("---")
-        #     print("input_text", item["input_text"])
-        #     print("tokenized_text", item["tokenized_text"])
-        #     print("original_labels", item["original_labels"])
-        #     print("tokenized_labels", item["tokenized_labels"])
-        #     print("input_ids", item["input_ids"])
-        #     print("loss_mask", item["loss_mask"])
-        #     print("word_to_tokens", item["word_to_tokens"])
-
-        return item
 
 
 class TimeSeriesDataset(Dataset):

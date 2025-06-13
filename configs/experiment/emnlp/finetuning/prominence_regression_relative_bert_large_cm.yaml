@@ -54,7 +54,7 @@ data:
   model_name: bert-large-cased
   batch_size: 30
   dataset_name: helsinki_prominence
-  data_dir: /nese/mit/group/evlab/u/cohams/PROJECTS/quantifying-redundancy/data/prosody/data
+  data_dir: /nese/mit/group/evlab/u/cohams/PROJECTS/contextual-redundancy/data/prosody/data
   train_file: train_360.txt
   val_file: dev.txt
   test_file: train_100_and_test.txt

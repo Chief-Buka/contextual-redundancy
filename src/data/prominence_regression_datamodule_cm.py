@@ -17,7 +17,7 @@ from transformers import LlamaTokenizer
 
 
 from src.data.components.helsinki import HelsinkiProminenceExtractor
-from src.data.components.datasets_cm import TokenTaggingDatasetSampleWindows, TokenTaggingDatasetAllWindows
+from src.data.components.datasets_cm import TokenTaggingDatasetSampleWindows
 from src.data.components.collators import collate_fn, encode_and_pad_batch
 
 

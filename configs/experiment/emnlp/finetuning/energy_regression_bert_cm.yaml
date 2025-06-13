@@ -52,7 +52,7 @@ data:
   model_name: bert-base-cased
   batch_size: 30
   dataset_name: LibriTTS
-  data_cache: /nese/mit/group/evlab/u/cohams/PROJECTS/quantifying-redundancy/data/prosody/data/cache
+  data_cache: /nese/mit/group/evlab/u/cohams/PROJECTS/contextual-redundancy/data/prosody/data/cache
   lab_root: /nese/mit/group/evlab/u/luwo/projects/data/LibriTTS/LibriTTSCorpusLabel/lab/word
   wav_root: /nese/mit/group/evlab/u/luwo/projects/data/LibriTTS/LibriTTS
   train_file: train-clean-360
